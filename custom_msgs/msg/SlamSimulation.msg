@@ -1,0 +1,2 @@
+
+bool slam_simulation

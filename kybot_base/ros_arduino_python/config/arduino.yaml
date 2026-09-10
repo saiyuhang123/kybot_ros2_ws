@@ -1,0 +1,46 @@
+# For a direct USB cable connection, the port name is typically
+# /dev/ttyACM# where is # is a number such as 0, 1, 2, etc
+# For a wireless connection like XBee, the port is typically
+# /dev/ttyUSB# where # is a number such as 0, 1, 2, etc.
+
+arduino:
+  ros__parameters:
+    port: /dev/ttyARDUINO
+    baud: 1500000
+    timeout: 0.2
+
+    rate: 30
+    sensorstate_rate: 10
+    use_base_controller: true
+    base_controller_rate: 30
+    use_imu_onboard: true
+
+    # For a robot that uses base_footprint, change base_frame to base_footprint
+    base_frame: base_footprint
+
+    # === Robot drivetrain parameters
+    wheel_diameter: 0.17 # old is 0.115
+    wheel_track: 0.655 # old is 0.50
+    encoder_resolution: 4096 # old car is 7392
+    gear_reduction: 1.0
+    #motors_reversed: true
+
+    # === PID parameters
+    #Kp: 10
+    #Kd: 12
+    #Ki: 0
+    #Ko: 50
+    #accel_limit: 1.0
+
+    # === Sensor definitions, encoded as a JSON string.
+    # Example:
+    # sensors: '{"motor_current_left": {"pin": 0, "type": "PololuMotorCurrent", "rate": 5}}'
+    # Sensor type can be one of the following (case sensitive):
+    #   * Ping
+    #   * GP2D12
+    #   * Analog
+    #   * Digital
+    #   * PololuMotorCurrent
+    #   * PhidgetsVoltage
+    #   * PhidgetsCurrent (20 Amp, DC)
+    sensors: '{}'

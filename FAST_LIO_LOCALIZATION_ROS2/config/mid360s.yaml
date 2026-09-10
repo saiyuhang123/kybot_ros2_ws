@@ -1,0 +1,64 @@
+/global_localization:
+    ros__parameters:
+        map_voxel_size: 0.5
+        scan_voxel_size: 0.5
+        freq_localization: 1.0          # [Hz] 原来1.0，提高ICP修正频率，转圈时不积攒大误差
+        localization_th: 0.5         # 原来0.9，降低匹配门槛，避免转圈时ICP被反复丢弃
+        fov: 6.283185307179586        # 2*pi, radian; 전체 시야
+        fov_far: 100.0
+
+/transform_fusion:
+    ros__parameters:
+        freq_pub_localization: 50.0  
+
+/global_map_publisher:
+    ros__parameters:
+        map_file_path: "/home/nvidia/kybot_ws/src/PCD/mapPoints.pcd"   # 部署机器上 pcd 的实际路径
+        interval: 5 # publish interval in seconds
+
+/**:
+    ros__parameters:
+        feature_extract_enable: false
+        point_filter_num: 4  # 4
+        max_iteration: 3
+        filter_size_surf: 1.0   # MID360 点密, 精度不够可降到 0.5 (CPU 开销随之上升)
+        filter_size_map: 1.0
+        cube_side_length: 1000.0
+        runtime_pos_log_enable: false
+
+        common:
+            lid_topic:  "/livox/lidar"     # MID360s CustomMsg
+            imu_topic:  "/livox/imu"       # MID360s 内置 IMU
+            time_sync_en: false        # MID360 内置IMU与激光同钟硬件同步, 无需软件时间同步
+            time_offset_lidar_to_imu: 0.0 # Time offset between lidar and IMU calibrated by other algorithms, e.g. LI-Init (can be found in README).
+                                        # This param will take effect no matter what time_sync_en is. So if the time offset is not known exactly, please set as 0.0
+
+        preprocess:
+            lidar_type: 1                # 1 for Livox serials LiDAR (CustomMsg), 2 for Velodyne, 3 for ouster
+            scan_line: 4                 # MID360 4 线非重复扫描
+            timestamp_unit: 3            # Livox CustomMsg 的 offset_time 为纳秒; avia 分支代码内已硬编码 ns→ms, 此项仅作记录
+            blind: 0.5                   # MID360 盲区 0.1m; 若车身/支架进入视场被采到, 调大此值
+
+        mapping:
+            acc_cov: 0.1
+            gyr_cov: 0.1
+            b_acc_cov: 0.0001
+            b_gyr_cov: 0.001   # 原来0.0001，加快gyro bias收敛，转圈时不再靠纯积分
+            fov_degree:    360.0
+            det_range:     100.0
+            extrinsic_est_en:  false      # true: enable the online estimation of IMU-LiDAR extrinsic,
+            extrinsic_T: [0.04165, 0.02326, -0.0284]   # MID360 出厂 LiDAR→IMU 外参
+            extrinsic_R: [ 1., 0., 0., 
+                        0., 1., 0., 
+                        0., 0., 1.]
+
+        publish:
+            path_en:  false
+            scan_publish_en:  true       # false: close all the point cloud output
+            dense_publish_en: false       # false: low down the points number in a global-frame point clouds scan. 已改 false: /cloud_registered 只被 global_localization 消费, ICP 前还要 0.5m voxel, 发降采样云即可, 大幅降低序列化和 Python 解析开销
+            scan_bodyframe_pub_en: false  # true: output the point cloud scans in IMU-body-frame
+
+        pcd_save:
+            pcd_save_en: false
+            interval: -1                 # how many LiDAR frames saved in each pcd file; 
+                                        # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.
