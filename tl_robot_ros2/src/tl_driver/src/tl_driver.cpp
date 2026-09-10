@@ -94,352 +94,352 @@ TL_Arm::TL_Arm() : rclcpp::Node("tl_driver")
 
   // 服务
   connect_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/connect_arm",
+      "tl_driver/connect_arm",
       std::bind(&TL_Arm::handle_connect_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   disconnect_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/disconnect_arm",
+      "tl_driver/disconnect_arm",
       std::bind(&TL_Arm::handle_disconnect_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   poweron_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/power_on",
+      "tl_driver/power_on",
       std::bind(&TL_Arm::handle_poweron_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   poweroff_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/power_off",
+      "tl_driver/power_off",
       std::bind(&TL_Arm::handle_poweroff_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   clear_error_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/clear_error",
+      "tl_driver/clear_error",
       std::bind(&TL_Arm::handle_clear_error_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_speed_service_ = this->create_service<tl_ros2_interface::srv::SetSpeed>(
-      "/tl_driver/set_speed",
+      "tl_driver/set_speed",
       std::bind(&TL_Arm::handle_set_speed_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_speed_service_ = this->create_service<tl_ros2_interface::srv::GetSpeed>(
-      "/tl_driver/get_speed",
+      "tl_driver/get_speed",
       std::bind(&TL_Arm::handle_get_speed_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_quat2rpy_service_ = this->create_service<tl_ros2_interface::srv::GetPosTransform>(
-      "/tl_driver/get_quat2rpy",
+      "tl_driver/get_quat2rpy",
       std::bind(&TL_Arm::handle_get_quat2rpy_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_rpy2quat_service_ = this->create_service<tl_ros2_interface::srv::GetPosTransform>(
-      "/tl_driver/get_rpy2quat",
+      "tl_driver/get_rpy2quat",
       std::bind(&TL_Arm::handle_get_rpy2quat_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_rpy2r_service_ = this->create_service<tl_ros2_interface::srv::GetPosTransform>(
-      "/tl_driver/get_rpy2r",
+      "tl_driver/get_rpy2r",
       std::bind(&TL_Arm::handle_get_rpy2r_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_tr2r_service_ = this->create_service<tl_ros2_interface::srv::GetPosTransform>(
-      "/tl_driver/get_tr2r",
+      "tl_driver/get_tr2r",
       std::bind(&TL_Arm::handle_get_tr2r_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_r2tr_service_ = this->create_service<tl_ros2_interface::srv::GetPosTransform>(
-      "/tl_driver/get_r2tr",
+      "tl_driver/get_r2tr",
       std::bind(&TL_Arm::handle_get_r2tr_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_controller_ip_service_ = this->create_service<tl_ros2_interface::srv::SetControllerIP>(
-      "/tl_driver/set_controller_ip",
+      "tl_driver/set_controller_ip",
       std::bind(&TL_Arm::handle_set_controller_ip_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_controller_id_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/get_controller_id",
+      "tl_driver/get_controller_id",
       std::bind(&TL_Arm::handle_get_controller_id_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   start_jogging_service_ = this->create_service<tl_ros2_interface::srv::Jogging>(
-      "/tl_driver/start_jogging",
+      "tl_driver/start_jogging",
       std::bind(&TL_Arm::handle_start_jogging_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   stop_jogging_service_ = this->create_service<tl_ros2_interface::srv::Jogging>(
-      "/tl_driver/stop_jogging",
+      "tl_driver/stop_jogging",
       std::bind(&TL_Arm::handle_stop_jogging_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_robot_state_service_ = this->create_service<tl_ros2_interface::srv::GetRobotState>(
-      "/tl_driver/get_robot_state",
+      "tl_driver/get_robot_state",
       std::bind(&TL_Arm::handle_get_robot_state_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_library_version_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/get_library_version",
+      "tl_driver/get_library_version",
       std::bind(&TL_Arm::handle_get_library_version_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_robot_joint_param_service_ = this->create_service<tl_ros2_interface::srv::GetRobotJointParam>(
-      "/tl_driver/get_robot_joint_param",
+      "tl_driver/get_robot_joint_param",
       std::bind(&TL_Arm::handle_get_robot_joint_param_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_robot_joint_param_service_ = this->create_service<tl_ros2_interface::srv::SetRobotJointParam>(
-      "/tl_driver/set_robot_joint_param",
+      "tl_driver/set_robot_joint_param",
       std::bind(&TL_Arm::handle_set_robot_joint_param_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_joint_temperature_service_ = this->create_service<tl_ros2_interface::srv::GetJointTemperature>(
-      "/tl_driver/get_joint_temperature",
+      "tl_driver/get_joint_temperature",
       std::bind(&TL_Arm::handle_get_joint_temperature_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_joint_voltage_service_ = this->create_service<tl_ros2_interface::srv::GetJointVoltage>(
-      "/tl_driver/get_joint_voltage",
+      "tl_driver/get_joint_voltage",
       std::bind(&TL_Arm::handle_get_joint_voltage_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_motor_current_service_ = this->create_service<tl_ros2_interface::srv::GetMotorCurrent>(
-      "/tl_driver/get_motor_current",
+      "tl_driver/get_motor_current",
       std::bind(&TL_Arm::handle_get_motor_current_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_joint_software_version_service_ = this->create_service<tl_ros2_interface::srv::GetJointSoftwareVersion>(
-      "/tl_driver/get_joint_software_version",
+      "tl_driver/get_joint_software_version",
       std::bind(&TL_Arm::handle_get_joint_software_version_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_nexmotion_lib_version_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/get_nexmotion_lib_version",
+      "tl_driver/get_nexmotion_lib_version",
       std::bind(&TL_Arm::handle_get_nexmotion_lib_version_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   restore_default_dh_param_service_ = this->create_service<tl_ros2_interface::srv::RestoreDefaultDHParam>(
-      "/tl_driver/restore_default_dh_param",
+      "tl_driver/restore_default_dh_param",
       std::bind(&TL_Arm::handle_restore_default_dh_param_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_default_cartesian_param_service_ =
-      this->create_service<std_srvs::srv::Trigger>("/tl_driver/set_default_cartesian_param",
+      this->create_service<std_srvs::srv::Trigger>("tl_driver/set_default_cartesian_param",
                                                    std::bind(&TL_Arm::handle_set_default_cartesian_param_service, this,
                                                              std::placeholders::_1, std::placeholders::_2),
                                                    rmw_qos_profile_services_default, service_group_);
 
   log_download_service_ = this->create_service<tl_ros2_interface::srv::LogDownload>(
-      "/tl_driver/log_download",
+      "tl_driver/log_download",
       std::bind(&TL_Arm::handle_log_download_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_drag_mode_service_ = this->create_service<tl_ros2_interface::srv::SetDragMode>(
-      "/tl_driver/set_drag_mode",
+      "tl_driver/set_drag_mode",
       std::bind(&TL_Arm::handle_set_drag_mode_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_drag_status_service_ = this->create_service<std_srvs::srv::Trigger>( // 用不了
-      "/tl_driver/get_drag_status",
+      "tl_driver/get_drag_status",
       std::bind(&TL_Arm::handle_get_drag_status_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   track_save_service_ = this->create_service<tl_ros2_interface::srv::TrackSave>(
-      "/tl_driver/track_save",
+      "tl_driver/track_save",
       std::bind(&TL_Arm::handle_track_save_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   track_playback_service_ = this->create_service<tl_ros2_interface::srv::TrackPlayback>(
-      "/tl_driver/track_playback",
+      "tl_driver/track_playback",
       std::bind(&TL_Arm::handle_track_playback_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_tool_param_service_ = this->create_service<tl_ros2_interface::srv::SetToolParam>(
-      "/tl_driver/set_tool_param",
+      "tl_driver/set_tool_param",
       std::bind(&TL_Arm::handle_set_tool_param_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_user_coord_service_ = this->create_service<tl_ros2_interface::srv::SetUserCoord>(
-      "/tl_driver/set_user_coord",
+      "tl_driver/set_user_coord",
       std::bind(&TL_Arm::handle_set_user_coord_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_axis_zero_pos_service_ = this->create_service<tl_ros2_interface::srv::SetAxisZeroPos>(
-      "/tl_driver/set_axis_zero_pos",
+      "tl_driver/set_axis_zero_pos",
       std::bind(&TL_Arm::handle_set_axis_zero_pos_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_current_coord_service_ = this->create_service<tl_ros2_interface::srv::SetCurrentCoord>(
-      "/tl_driver/set_current_coord",
+      "tl_driver/set_current_coord",
       std::bind(&TL_Arm::handle_set_current_coord_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_current_coord_service_ = this->create_service<tl_ros2_interface::srv::GetCurrentCoord>(
-      "/tl_driver/get_current_coord",
+      "tl_driver/get_current_coord",
       std::bind(&TL_Arm::handle_get_current_coord_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_coord_num_service_ = this->create_service<tl_ros2_interface::srv::SetCoordNum>(
-      "/tl_driver/set_coord_num",
+      "tl_driver/set_coord_num",
       std::bind(&TL_Arm::handle_set_coord_num_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_coord_num_service_ = this->create_service<tl_ros2_interface::srv::GetCoordNum>(
-      "/tl_driver/get_coord_num",
+      "tl_driver/get_coord_num",
       std::bind(&TL_Arm::handle_get_coord_num_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_digital_output_service_ = this->create_service<tl_ros2_interface::srv::SetDigitalOutput>(
-      "/tl_driver/set_digital_output",
+      "tl_driver/set_digital_output",
       std::bind(&TL_Arm::handle_set_digital_output_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_digital_input_output_service_ = this->create_service<tl_ros2_interface::srv::GetDigitalInputOutput>(
-      "/tl_driver/get_digital_input_output",
+      "tl_driver/get_digital_input_output",
       std::bind(&TL_Arm::handle_get_digital_input_output_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   modbus_write_service_ = this->create_service<tl_ros2_interface::srv::ModbusWrite>(
-      "/tl_driver/modbus_write",
+      "tl_driver/modbus_write",
       std::bind(&TL_Arm::handle_modbus_write_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   modbus_read_service_ = this->create_service<tl_ros2_interface::srv::ModbusRead>(
-      "/tl_driver/modbus_read",
+      "tl_driver/modbus_read",
       std::bind(&TL_Arm::handle_modbus_read_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   coord_transform_service_ = this->create_service<tl_ros2_interface::srv::CoordTransform>(
-      "/tl_driver/coord_transform",
+      "tl_driver/coord_transform",
       std::bind(&TL_Arm::handle_coord_transform_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_pos_reachable_service_ = this->create_service<tl_ros2_interface::srv::GetPosReachable>(
-      "/tl_driver/get_pos_reachable",
+      "tl_driver/get_pos_reachable",
       std::bind(&TL_Arm::handle_get_pos_reachable_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_dh_param_service_ = this->create_service<tl_ros2_interface::srv::SetDHParam>(
-      "/tl_driver/set_dh_param",
+      "tl_driver/set_dh_param",
       std::bind(&TL_Arm::handle_set_dh_param_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_dh_param_service_ = this->create_service<tl_ros2_interface::srv::GetDHParam>(
-      "/tl_driver/get_dh_param",
+      "tl_driver/get_dh_param",
       std::bind(&TL_Arm::handle_get_dh_param_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_all_job_filename_service_ = this->create_service<tl_ros2_interface::srv::GetAllJobFileName>(
-      "/tl_driver/get_all_job_filename",
+      "tl_driver/get_all_job_filename",
       std::bind(&TL_Arm::handle_get_all_job_filename_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   job_run_service_ = this->create_service<tl_ros2_interface::srv::JobRun>(
-      "/tl_driver/job_run",
+      "tl_driver/job_run",
       std::bind(&TL_Arm::handle_job_run_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   job_delete_service_ = this->create_service<tl_ros2_interface::srv::JobRun>(
-      "/tl_driver/job_delete",
+      "tl_driver/job_delete",
       std::bind(&TL_Arm::handle_job_delete_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   job_insert_movej_service_ = this->create_service<tl_ros2_interface::srv::JobInsertMove>(
-      "/tl_driver/job_insert_moveJ",
+      "tl_driver/job_insert_moveJ",
       std::bind(&TL_Arm::handle_job_insert_movej_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   job_insert_movel_service_ = this->create_service<tl_ros2_interface::srv::JobInsertMove>(
-      "/tl_driver/job_insert_moveL",
+      "tl_driver/job_insert_moveL",
       std::bind(&TL_Arm::handle_job_insert_movel_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   job_insert_imove_service_ = this->create_service<tl_ros2_interface::srv::JobInsertMove>(
-      "/tl_driver/job_insert_imove",
+      "tl_driver/job_insert_imove",
       std::bind(&TL_Arm::handle_job_insert_imove_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   job_insert_movec_service_ = this->create_service<tl_ros2_interface::srv::JobInsertMove>(
-      "/tl_driver/job_insert_moveC",
+      "tl_driver/job_insert_moveC",
       std::bind(&TL_Arm::handle_job_insert_movec_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_global_pos_service_ = this->create_service<tl_ros2_interface::srv::SetGlobalPos>(
-      "/tl_driver/set_global_pos",
+      "tl_driver/set_global_pos",
       std::bind(&TL_Arm::handle_set_global_pos_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_global_pos_service_ = this->create_service<tl_ros2_interface::srv::GetGlobalPos>(
-      "/tl_driver/get_global_pos",
+      "tl_driver/get_global_pos",
       std::bind(&TL_Arm::handle_get_global_pos_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   set_current_mode_service_ = this->create_service<tl_ros2_interface::srv::SetCurrentMode>(
-      "/tl_driver/set_current_mode",
+      "tl_driver/set_current_mode",
       std::bind(&TL_Arm::handle_set_current_mode_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_current_mode_service_ = this->create_service<tl_ros2_interface::srv::GetCurrentMode>(
-      "/tl_driver/get_current_mode",
+      "tl_driver/get_current_mode",
       std::bind(&TL_Arm::handle_get_current_mode_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   open_servoj_service_ = this->create_service<tl_ros2_interface::srv::OpenServoJ>(
-      "/tl_driver/open_servoj",
+      "tl_driver/open_servoj",
       std::bind(&TL_Arm::handle_open_servoj_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   close_servoj_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/close_servoj",
+      "tl_driver/close_servoj",
       std::bind(&TL_Arm::handle_close_servoj_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   queue_motion_set_status_service_ = this->create_service<tl_ros2_interface::srv::QueueMotionSetStatus>(
-      "/tl_driver/queue_motion_set_status",
+      "tl_driver/queue_motion_set_status",
       std::bind(&TL_Arm::handle_queue_motion_set_status_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   queue_motion_movej_service_ = this->create_service<tl_ros2_interface::srv::QueueMotionMoveJ>(
-      "/tl_driver/queue_motion_movej",
+      "tl_driver/queue_motion_movej",
       std::bind(&TL_Arm::handle_queue_motion_movej_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   queue_motion_stop_service_ = this->create_service<std_srvs::srv::Trigger>(
-      "/tl_driver/queue_motion_stop",
+      "tl_driver/queue_motion_stop",
       std::bind(&TL_Arm::handle_queue_motion_stop_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_current_motor_torque_service_ = this->create_service<tl_ros2_interface::srv::GetCurrentMotorTorque>(
-      "/tl_driver/get_current_motor_torque",
+      "tl_driver/get_current_motor_torque",
       std::bind(&TL_Arm::handle_get_current_motor_torque_service, this, std::placeholders::_1, std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   get_current_line_joint_speed_service_ = this->create_service<tl_ros2_interface::srv::GetCurrentLineJointSpeed>(
-      "/tl_driver/get_current_line_joint_speed",
+      "tl_driver/get_current_line_joint_speed",
       std::bind(&TL_Arm::handle_get_current_line_joint_speed_service, this, std::placeholders::_1,
                 std::placeholders::_2),
       rmw_qos_profile_services_default, service_group_);
 
   // 话题pub
-  joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
+  joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
 
-  tcp_pose_pub_ = this->create_publisher<tl_ros2_interface::msg::CartesianPose>("/tcp_pose", 10);
+  tcp_pose_pub_ = this->create_publisher<tl_ros2_interface::msg::CartesianPose>("tcp_pose", 10);
 
-  running_status_pub_ = this->create_publisher<tl_ros2_interface::msg::ArmStatus>("/arm_status", 10);
+  running_status_pub_ = this->create_publisher<tl_ros2_interface::msg::ArmStatus>("arm_status", 10);
 
   // 话题sub
   movej_sub_ = this->create_subscription<tl_ros2_interface::msg::MoveCommand>(
-      "/tl_driver/moveJ", 10, std::bind(&TL_Arm::handle_movej_topic, this, std::placeholders::_1), topic_group_option);
+      "tl_driver/moveJ", 10, std::bind(&TL_Arm::handle_movej_topic, this, std::placeholders::_1), topic_group_option);
 
   movel_sub_ = this->create_subscription<tl_ros2_interface::msg::MoveCommand>(
-      "/tl_driver/moveL", 10, std::bind(&TL_Arm::handle_movel_topic, this, std::placeholders::_1), topic_group_option);
+      "tl_driver/moveL", 10, std::bind(&TL_Arm::handle_movel_topic, this, std::placeholders::_1), topic_group_option);
 
   set_servoj_pos_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-      "/tl_driver/set_servoj_pos", 10, std::bind(&TL_Arm::handle_set_servoj_pos_topic, this, std::placeholders::_1),
+      "tl_driver/set_servoj_pos", 10, std::bind(&TL_Arm::handle_set_servoj_pos_topic, this, std::placeholders::_1),
       topic_group_option);
 
   set_servol_pos_sub_ = this->create_subscription<tl_ros2_interface::msg::ServolMove>(
-      "/tl_driver/set_servol_pos", 10, std::bind(&TL_Arm::handle_set_servol_pos_topic, this, std::placeholders::_1),
+      "tl_driver/set_servol_pos", 10, std::bind(&TL_Arm::handle_set_servol_pos_topic, this, std::placeholders::_1),
       topic_group_option);
 
   auto period =

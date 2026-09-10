@@ -12,9 +12,10 @@ class DeskController(Node):
         super().__init__('desk_controller')
 
         # 1. 声明并获取参数（默认匹配你的设置）
-        self.declare_parameter('port', '/dev/ttyACM0')          # Linux 下可改为 '/dev/ttyUSB0'
+        self.declare_parameter('port', '/dev/ttyDESK')          # 已绑定 udev 别名 ttyDESK (CH343, SN 575A018668)
         self.declare_parameter('baudrate', 38400)       # 38400 波特率
-        
+        self.declare_parameter('poll_rate', 5.0)        # 高度自动轮询频率 Hz，0 = 关闭
+
         port = self.get_parameter('port').value
         baudrate = self.get_parameter('baudrate').value
 
@@ -40,6 +41,7 @@ class DeskController(Node):
         self.srv_stop = self.create_service(Trigger, '/desk/stop', self.handle_stop)
         self.srv_reset = self.create_service(Trigger, '/desk/reset', self.handle_reset)
         self.srv_get_err = self.create_service(Trigger, '/desk/get_error', self.handle_get_error)
+        self.srv_query_height = self.create_service(Trigger, '/desk/query_height', self.handle_query_height)
 
         # 4. 创建话题订阅 (用于输入目标高度和档位)
         self.sub_cmd_height = self.create_subscription(
@@ -57,18 +59,35 @@ class DeskController(Node):
         self.rx_thread = threading.Thread(target=self.receive_loop, daemon=True)
         self.rx_thread.start()
 
+        # 7. 高度自动轮询（板子不主动上传，需查询触发回传）
+        poll_rate = self.get_parameter('poll_rate').value
+        if poll_rate > 0:
+            self.create_timer(
+                1.0 / poll_rate,
+                lambda: self.send_command(bytes([0xAA, 0x03, 0x01, 0x00, 0xFF]), log=False)
+            )
+            self.get_logger().info(f'高度轮询已开启: {poll_rate} Hz')
+
         self.get_logger().info('升降桌 ROS 2 控制服务已就绪！')
 
     # ========== 串口收发底层封装 ==========
-    def send_command(self, cmd_bytes: bytes):
+    def send_command(self, cmd_bytes: bytes, log: bool = True):
         with self.serial_lock:
             if self.ser and self.ser.is_open:
                 self.ser.write(cmd_bytes)
-                self.get_logger().info(f'已发送报文: {cmd_bytes.hex(" ")}')
+                if log:
+                    self.get_logger().info(f'已发送报文: {cmd_bytes.hex(" ")}')
             else:
                 self.get_logger().warn('串口未打开，发送失败')
 
     # ========== 服务回调函数 ==========
+    def handle_query_height(self, request, response):
+        """查询当前高度（应答式协议：查询后板子回传，经 /desk/current_height 发布）"""
+        self.send_command(bytes([0xAA, 0x03, 0x01, 0x00, 0xFF]))
+        response.success = True
+        response.message = "高度查询命令已下发，结果见 /desk/current_height"
+        return response
+
     def handle_up(self, request, response):
         """上升指令"""
         self.send_command(bytes([0xAA, 0x03, 0x02, 0x00, 0xFF]))
