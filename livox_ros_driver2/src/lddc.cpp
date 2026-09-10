@@ -39,6 +39,39 @@
 
 namespace livox_ros {
 
+namespace {
+
+inline void RotateVec(const double R[3][3], float &x, float &y, float &z) {
+  float tx = static_cast<float>(R[0][0] * x + R[0][1] * y + R[0][2] * z);
+  float ty = static_cast<float>(R[1][0] * x + R[1][1] * y + R[1][2] * z);
+  float tz = static_cast<float>(R[2][0] * x + R[2][1] * y + R[2][2] * z);
+  x = tx; y = ty; z = tz;
+}
+
+}  // namespace
+
+void Lddc::SetMountCompensation(bool enable, double roll, double pitch, double yaw) {
+  mount_comp_en_ = enable;
+  if (!enable) {
+    return;
+  }
+  double cr = cos(roll),  sr = sin(roll);
+  double cp = cos(pitch), sp = sin(pitch);
+  double cy = cos(yaw),   sy = sin(yaw);
+  // R = Rz(yaw) * Ry(pitch) * Rx(roll)
+  mount_rot_[0][0] = cy * cp;
+  mount_rot_[0][1] = cy * sp * sr - sy * cr;
+  mount_rot_[0][2] = cy * sp * cr + sy * sr;
+  mount_rot_[1][0] = sy * cp;
+  mount_rot_[1][1] = sy * sp * sr + cy * cr;
+  mount_rot_[1][2] = sy * sp * cr - cy * sr;
+  mount_rot_[2][0] = -sp;
+  mount_rot_[2][1] = cp * sr;
+  mount_rot_[2][2] = cp * cr;
+  std::cout << "Mount compensation enabled: roll=" << roll << " pitch=" << pitch
+            << " yaw=" << yaw << " (rad)" << std::endl;
+}
+
 /** Lidar Data Distribute Control--------------------------------------------*/
 #ifdef BUILDING_ROS1
 Lddc::Lddc(int format, int multi_topic, int data_src, int output_type,
@@ -322,6 +355,9 @@ void Lddc::InitPointcloud2Msg(const StoragePacket& pkg, PointCloud2& cloud, uint
     point.x = pkg.points[i].x;
     point.y = pkg.points[i].y;
     point.z = pkg.points[i].z;
+    if (mount_comp_en_) {
+      RotateVec(mount_rot_, point.x, point.y, point.z);
+    }
     point.reflectivity = pkg.points[i].intensity;
     point.tag = pkg.points[i].tag;
     point.line = pkg.points[i].line;
@@ -389,6 +425,9 @@ void Lddc::FillPointsToCustomMsg(CustomMsg& livox_msg, const StoragePacket& pkg)
     point.x = points[i].x;
     point.y = points[i].y;
     point.z = points[i].z;
+    if (mount_comp_en_) {
+      RotateVec(mount_rot_, point.x, point.y, point.z);
+    }
     point.reflectivity = points[i].intensity;
     point.tag = points[i].tag;
     point.line = points[i].line;
@@ -493,6 +532,29 @@ void Lddc::InitImuMsg(const ImuData& imu_data, ImuMsg& imu_msg, uint64_t& timest
   imu_msg.linear_acceleration.x = imu_data.acc_x;
   imu_msg.linear_acceleration.y = imu_data.acc_y;
   imu_msg.linear_acceleration.z = imu_data.acc_z;
+
+  // 协方差: 默认全 0 会被 robot_localization 当作"无限精确"导致滤波过度信任,
+  // 按 MID360 内置 IMU(BMI088) 噪声量级填典型值; 姿态无效置 -1
+  imu_msg.angular_velocity_covariance[0] = 4e-4;   // gyro x, std ~0.02 rad/s
+  imu_msg.angular_velocity_covariance[4] = 4e-4;   // gyro y
+  imu_msg.angular_velocity_covariance[8] = 4e-4;   // gyro z
+  imu_msg.linear_acceleration_covariance[0] = 1e-2;  // acc x, std ~0.1 m/s^2
+  imu_msg.linear_acceleration_covariance[4] = 1e-2;  // acc y
+  imu_msg.linear_acceleration_covariance[8] = 1e-2;  // acc z
+  imu_msg.orientation_covariance[0] = -1.0;          // 不提供姿态
+
+  if (mount_comp_en_) {
+    float gx = imu_data.gyro_x, gy = imu_data.gyro_y, gz = imu_data.gyro_z;
+    float ax = imu_data.acc_x,  ay = imu_data.acc_y,  az = imu_data.acc_z;
+    RotateVec(mount_rot_, gx, gy, gz);
+    RotateVec(mount_rot_, ax, ay, az);
+    imu_msg.angular_velocity.x = gx;
+    imu_msg.angular_velocity.y = gy;
+    imu_msg.angular_velocity.z = gz;
+    imu_msg.linear_acceleration.x = ax;
+    imu_msg.linear_acceleration.y = ay;
+    imu_msg.linear_acceleration.z = az;
+  }
 }
 
 void Lddc::PublishImuData(LidarImuDataQueue& imu_data_queue, const uint8_t index) {

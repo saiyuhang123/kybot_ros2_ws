@@ -86,7 +86,7 @@ black src/ && isort src/
 
 ```bash
 source ~/tl_robot_ros2_cpp/install/setup.bash
-ros2 launch tl_bringup tl_<arm_type>_bringup.launch.py
+ros2 launch tl_bringup tl_tcb605_bringup.launch.py
 ```
 
 `<arm_type>` 可选：`tcb605`、`tcb605f`、`tcb605l`、`tcb605lv`、`tcb605v`、`tcb610`、`tcb610v`、`tcb705`、`tcb705f`、`tcb705l`、`tcb705lv`、`tcb705v`、`tcb710`、`tcb710v`

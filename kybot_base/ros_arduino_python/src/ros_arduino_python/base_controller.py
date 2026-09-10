@@ -65,6 +65,8 @@ class BaseController:
         self.node.declare_parameter('base_controller_rate', 10)
         self.node.declare_parameter('base_controller_timeout', 1.0)
         self.node.declare_parameter('publish_odom', True)
+        # TF(odom->base) 与 /odom 话题分开控制: EKF 融合方案下 TF 应由 EKF 独占广播
+        self.node.declare_parameter('publish_tf', True)
         self.node.declare_parameter('odom_frame', 'odom')
         self.node.declare_parameter('cartographer_slam', False)
         self.node.declare_parameter('use_imu_onboard', False)
@@ -82,6 +84,7 @@ class BaseController:
         self.timeout = self.node.get_parameter('base_controller_timeout').value
         self.stopped = False
         self.publish_odom = self.node.get_parameter('publish_odom').value
+        self.publish_tf = self.node.get_parameter('publish_tf').value
         self.odom_frame = self.node.get_parameter('odom_frame').value
         self.cartographer_slam = self.node.get_parameter('cartographer_slam').value
         self.use_imu_onboard = self.node.get_parameter('use_imu_onboard').value
@@ -417,8 +420,8 @@ class BaseController:
             quaternion.z = sin(self.th / 2.0)
             quaternion.w = cos(self.th / 2.0)
 
-            if self.publish_odom:
-                # Create the odometry transform frame broadcaster.
+            if self.publish_tf:
+                # TF(odom->base) 独立开关: 接入 EKF 时由 EKF 独占广播, 底盘不再发, 避免双发布者冲突
                 t = TransformStamped()
                 t.header.stamp = self.node.get_clock().now().to_msg()
                 t.header.frame_id = self.odom_frame
@@ -429,6 +432,7 @@ class BaseController:
                 t.transform.rotation = quaternion
                 self.odomBroadcaster.sendTransform(t)
 
+            if self.publish_odom:
                 odom = Odometry()
                 odom.header.frame_id = self.odom_frame
                 odom.child_frame_id = self.base_frame

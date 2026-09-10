@@ -13,7 +13,7 @@
 
 /global_map_publisher:
     ros__parameters:
-        map_file_path: "/home/nvidia/kybot_ws/src/PCD/mapPoints.pcd"   # 部署机器上 pcd 的实际路径
+        map_file_path: "/home/kybot/fast_lio2_ws/test.pcd"   # 部署机器上 pcd 的实际路径
         interval: 5 # publish interval in seconds
 
 /**:

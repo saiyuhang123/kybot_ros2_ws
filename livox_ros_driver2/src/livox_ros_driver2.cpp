@@ -137,6 +137,10 @@ DriverNode::DriverNode(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("user_config_path", "path_default");
   this->declare_parameter("cmdline_input_bd_code", "000000000000001");
   this->declare_parameter("lvx_file_path", "/home/livox/livox_test.lvx");
+  this->declare_parameter("mount_compensate_en", false);
+  this->declare_parameter("mount_roll", 0.0);
+  this->declare_parameter("mount_pitch", 0.0);
+  this->declare_parameter("mount_yaw", 0.0);
 
   this->get_parameter("xfer_format", xfer_format);
   this->get_parameter("multi_topic", multi_topic);
@@ -158,6 +162,14 @@ DriverNode::DriverNode(const rclcpp::NodeOptions & node_options)
   /** Lidar data distribute control and lidar data source set */
   lddc_ptr_ = std::make_unique<Lddc>(xfer_format, multi_topic, data_src, output_type, publish_freq, frame_id);
   lddc_ptr_->SetRosNode(this);
+
+  bool mount_comp_en = false;
+  double mount_roll = 0.0, mount_pitch = 0.0, mount_yaw = 0.0;
+  this->get_parameter("mount_compensate_en", mount_comp_en);
+  this->get_parameter("mount_roll", mount_roll);
+  this->get_parameter("mount_pitch", mount_pitch);
+  this->get_parameter("mount_yaw", mount_yaw);
+  lddc_ptr_->SetMountCompensation(mount_comp_en, mount_roll, mount_pitch, mount_yaw);
 
   if (data_src == kSourceRawLidar) {
     DRIVER_INFO(*this, "Data Source is raw lidar.");

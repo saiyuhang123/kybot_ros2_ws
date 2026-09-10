@@ -3,16 +3,13 @@
 
 import copy
 import threading
+import time
 
 import rclpy
 from rclpy.node import Node
 import numpy as np
 
 import tf2_ros
-try:
-    import tf_transformations
-except ImportError:
-    from tf2_ros import transformations as tf_transformations
 
 from geometry_msgs.msg import Point, Quaternion, TransformStamped
 from nav_msgs.msg import Odometry
@@ -29,6 +26,7 @@ class TransformFusionNode(Node):
         # tf buffer 用于获取 EKF 发布的 odom->base_link
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self._last_tf_warn = 0.0   # warn 节流用 (monotonic 秒)
 
         # 구독자
         self.create_subscription(Odometry, '/Odometry', self.cb_save_fastlio_odom, 1)
@@ -51,19 +49,71 @@ class TransformFusionNode(Node):
         with self.lock:
             self.cur_map_to_odom_fl = msg
 
+    # ─── 手写小矩阵运算 ─────────────────────────────────────────
+    # tf_transformations 的 *_from_matrix 走 decompose→np.linalg.inv,
+    # 高频小矩阵 BLAS 调用会让 OpenBLAS worker 线程在 sched_yield 上自旋烧核,
+    # 这里全部用纯逐元素 numpy 运算替代 (不触发 BLAS 线程)
+    @staticmethod
+    def _quat_to_mat(x, y, z, w, tx, ty, tz):
+        """四元数+平移 → 4x4 齐次矩阵"""
+        n = x*x + y*y + z*z + w*w
+        s = 2.0 / n if n > 0.0 else 0.0
+        xx, yy, zz = x*x*s, y*y*s, z*z*s
+        xy, xz, yz = x*y*s, x*z*s, y*z*s
+        wx, wy, wz = w*x*s, w*y*s, w*z*s
+        return np.array([
+            [1.0-(yy+zz),  xy-wz,        xz+wy,        tx],
+            [xy+wz,        1.0-(xx+zz),  yz-wx,        ty],
+            [xz-wy,        yz+wx,        1.0-(xx+yy),  tz],
+            [0.0,          0.0,          0.0,          1.0],
+        ])
+
+    @staticmethod
+    def _mat_to_quat(M):
+        """4x4 齐次矩阵 → (x,y,z,w), trace 分支法"""
+        R = M[:3, :3]
+        t = R[0,0] + R[1,1] + R[2,2]
+        if t > 0.0:
+            s = np.sqrt(t + 1.0) * 2.0
+            return np.array([(R[2,1]-R[1,2])/s, (R[0,2]-R[2,0])/s,
+                             (R[1,0]-R[0,1])/s, 0.25*s])
+        i = int(np.argmax((R[0,0], R[1,1], R[2,2])))
+        if i == 0:
+            s = np.sqrt(1.0 + R[0,0] - R[1,1] - R[2,2]) * 2.0
+            return np.array([0.25*s, (R[0,1]+R[1,0])/s,
+                             (R[0,2]+R[2,0])/s, (R[2,1]-R[1,2])/s])
+        if i == 1:
+            s = np.sqrt(1.0 + R[1,1] - R[0,0] - R[2,2]) * 2.0
+            return np.array([(R[0,1]+R[1,0])/s, 0.25*s,
+                             (R[1,2]+R[2,1])/s, (R[0,2]-R[2,0])/s])
+        s = np.sqrt(1.0 + R[2,2] - R[0,0] - R[1,1]) * 2.0
+        return np.array([(R[0,2]+R[2,0])/s, (R[1,2]+R[2,1])/s,
+                         0.25*s, (R[1,0]-R[0,1])/s])
+
+    @staticmethod
+    def _inv_mat(T):
+        """齐次矩阵求逆: [R t;0 1]^-1 = [R.T -R.T·t;0 1]"""
+        R = T[:3, :3]
+        t = T[:3, 3]
+        Ti = np.eye(4)
+        Ti[:3, :3] = R.T
+        Ti[:3, 3]  = -(R * t[:, None]).sum(axis=0)   # = -R.T @ t
+        return Ti
+
+    @staticmethod
+    def _mat_mul(A, B):
+        """einsum 走 C 循环, 不经过 BLAS"""
+        return np.einsum('ij,jk->ik', A, B)
+
     def pose_to_mat(self, odom_msg: Odometry) -> np.ndarray:
         t = odom_msg.pose.pose.position
         q = odom_msg.pose.pose.orientation
-        trans = tf_transformations.translation_matrix([t.x, t.y, t.z])
-        rot   = tf_transformations.quaternion_matrix([q.x, q.y, q.z, q.w])
-        return trans @ rot
+        return self._quat_to_mat(q.x, q.y, q.z, q.w, t.x, t.y, t.z)
 
     def tf_to_mat(self, tf_msg: TransformStamped) -> np.ndarray:
         t = tf_msg.transform.translation
         q = tf_msg.transform.rotation
-        trans = tf_transformations.translation_matrix([t.x, t.y, t.z])
-        rot   = tf_transformations.quaternion_matrix([q.x, q.y, q.z, q.w])
-        return trans @ rot
+        return self._quat_to_mat(q.x, q.y, q.z, q.w, t.x, t.y, t.z)
 
     def timer_callback(self):
         with self.lock:
@@ -75,7 +125,7 @@ class TransformFusionNode(Node):
         # FastLIO 的全局位姿: map -> body
         T_map_to_odom_fl   = self.pose_to_mat(map2odom_fl) if map2odom_fl is not None else np.eye(4)
         T_odom_fl_to_body  = self.pose_to_mat(fastlio_odom)
-        T_map_to_body      = T_map_to_odom_fl @ T_odom_fl_to_body
+        T_map_to_body      = self._mat_mul(T_map_to_odom_fl, T_odom_fl_to_body)
 
         # 获取 EKF 发布的 odom -> base_link
         T_odom_ekf_to_body = None
@@ -84,16 +134,20 @@ class TransformFusionNode(Node):
                 'odom', 'base_link', rclpy.time.Time())
             T_odom_ekf_to_body = self.tf_to_mat(ekf_tf)
         except Exception as e:
-            self.get_logger().warn(f'Cannot lookup odom->base_link from EKF: {e}')
+            # 警告节流: EKF 不在时避免 50Hz 刷日志
+            now = time.monotonic()
+            if now - self._last_tf_warn > 2.0:
+                self._last_tf_warn = now
+                self.get_logger().warn(f'Cannot lookup odom->base_link from EKF: {e}')
 
         # 用 EKF 的 odom 定义来计算 map->odom
         if T_odom_ekf_to_body is not None:
-            T_map_to_odom = T_map_to_body @ np.linalg.inv(T_odom_ekf_to_body)
+            T_map_to_odom = self._mat_mul(T_map_to_body, self._inv_mat(T_odom_ekf_to_body))
         else:
             T_map_to_odom = T_map_to_odom_fl
 
-        trans = tf_transformations.translation_from_matrix(T_map_to_odom)
-        quat  = tf_transformations.quaternion_from_matrix(T_map_to_odom)
+        trans = T_map_to_odom[:3, 3]
+        quat  = self._mat_to_quat(T_map_to_odom)
 
         # tf 브로드캐스트: map -> odom (与 EKF 的 odom 定义一致)
         t_msg = TransformStamped()
@@ -110,8 +164,8 @@ class TransformFusionNode(Node):
         self.tf_broadcaster.sendTransform(t_msg)
 
         # fused localization (map -> body)
-        xyz   = tf_transformations.translation_from_matrix(T_map_to_body)
-        quat2 = tf_transformations.quaternion_from_matrix(T_map_to_body)
+        xyz   = T_map_to_body[:3, 3]
+        quat2 = self._mat_to_quat(T_map_to_body)
 
         loc_msg = Odometry()
         loc_msg.header.stamp          = fastlio_odom.header.stamp

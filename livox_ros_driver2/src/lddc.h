@@ -90,6 +90,9 @@ class Lddc final {
   uint8_t IsMultiTopic(void) { return use_multi_topic_; }
   void SetRosNode(livox_ros::DriverNode *node) { cur_node_ = node; }
 
+  /** 底座倾斜补偿：将点云与 IMU 数据旋转到虚拟水平坐标系（roll/pitch/yaw 单位：弧度） */
+  void SetMountCompensation(bool enable, double roll, double pitch, double yaw);
+
   // void SetRosPub(ros::Publisher *pub) { global_pub_ = pub; };  // NOT USED
   void SetPublishFrq(uint32_t frq) { publish_frq_ = frq; }
 
@@ -156,6 +159,9 @@ class Lddc final {
 #endif
 
   livox_ros::DriverNode *cur_node_;
+
+  bool mount_comp_en_ = false;
+  double mount_rot_[3][3] = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
 };
 
 }  // namespace livox_ros

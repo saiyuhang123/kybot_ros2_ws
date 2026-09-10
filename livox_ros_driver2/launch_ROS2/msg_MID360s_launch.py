@@ -28,7 +28,12 @@ livox_ros2_params = [
     {"frame_id": frame_id},
     {"lvx_file_path": lvx_file_path},
     {"user_config_path": user_config_path},
-    {"cmdline_input_bd_code": cmdline_bd_code}
+    {"cmdline_input_bd_code": cmdline_bd_code},
+    # 底座倾斜补偿：将点云和IMU旋转到虚拟水平系，pitch 为实测底座倾角(28.38度≈0.4954rad)
+    {"mount_compensate_en": True},
+    {"mount_roll": 0.0},
+    {"mount_pitch": 0.4954},
+    {"mount_yaw": 0.0}
 ]
 
 

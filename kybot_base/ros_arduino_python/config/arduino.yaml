@@ -13,10 +13,14 @@ arduino:
     sensorstate_rate: 10
     use_base_controller: true
     base_controller_rate: 30
-    use_imu_onboard: true
+    use_imu_onboard: false   # 不用底盘板载 IMU, EKF 融合 MID360s 的 /livox/imu
 
-    # For a robot that uses base_footprint, change base_frame to base_footprint
-    base_frame: base_footprint
+    # TF(odom->base_link) 由 EKF 独占广播, 底盘只发 /odom 话题
+    publish_odom: true
+    publish_tf: false
+
+    # 与定位/Nav2 链路的 frame 命名统一为 base_link
+    base_frame: base_link
 
     # === Robot drivetrain parameters
     wheel_diameter: 0.17 # old is 0.115
