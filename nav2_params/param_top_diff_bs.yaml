@@ -152,7 +152,7 @@ global_costmap:
 map_server:
   ros__parameters:
     use_sim_time: False
-    yaml_filename: "/home/kybot/kybot_ros2_ws/my_map.yaml"
+    yaml_filename: "/home/kybot/kybot_ros2_ws/nav2_params/my_map.yaml"
 
 map_saver:
   ros__parameters:

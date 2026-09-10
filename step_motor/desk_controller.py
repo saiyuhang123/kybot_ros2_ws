@@ -21,6 +21,7 @@ class DeskController(Node):
 
         # 2. 初始化串口
         self.serial_lock = threading.Lock()
+        self.ser = None
         try:
             self.ser = serial.Serial(
                 port=port,
