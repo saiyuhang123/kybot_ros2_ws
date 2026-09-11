@@ -80,22 +80,23 @@ local_costmap:
         plugin: "nav2_costmap_2d::VoxelLayer"      #体素层插件。
         enabled: True
         publish_voxel_map: True
-        origin_z: 0.0                              #体素地图的起始Z坐标
+        origin_z: -0.25                             #体素地图的起始Z坐标，覆盖地面以下的负高度点
         z_resolution: 0.05                         #体素地图的Z轴分辨率
-        z_voxels: 16                               #体素地图的Z轴体素数量
+        z_voxels: 36                               #体素地图的Z轴体素数量，-0.25~1.55m
         max_obstacle_height: 2.0                   #可检测障碍物的最大高度（米）
         mark_threshold: 0                          #标记体素的阈值
-        observation_sources: scan                  #观测源
-        scan:
-          topic: /scan_fe
-          max_obstacle_height: 2.0                  #可检测障碍物的最大高度（米）
+        observation_sources: pointcloud            #观测源
+        pointcloud:
+          topic: /cloud_registered_base          #已用LIO自身位姿转到base_link的点云，消除odom同名异系导致的障碍漂移(P0-2)
+          data_type: "PointCloud2"                 #数据类型，3D点云
+          min_obstacle_height: -0.12               #base_link系下最小障碍高度，地面约-0.22，排除地面（与原2D切片一致）
+          max_obstacle_height: 1.5                 #base_link系下最大障碍高度，过滤头顶/高处干扰
           clearing: True                            #是否启用障碍物清除功能
           marking: True                             #是否启用障碍物标记功能
-          data_type: "LaserScan"                    #数据类型
           raytrace_max_range: 4.5                   #从10.0降到4.5，略大于obstacle_max_range避免误清除
-          raytrace_min_range: 0.0                   #控制光线追踪从代价地图中清除障碍物的最大范围
+          raytrace_min_range: 0.6                   #小于0.6m的点在机器人footprint内部，不参与清除
           obstacle_max_range: 4.0                   #提速后需要看得更远（5.6s×0.5m/s=2.8m，留余量3.5m）
-          obstacle_min_range: 0.0                   #控制代价地图上标记障碍物的最小范围
+          obstacle_min_range: 0.6                   #排除footprint内的自遮挡点云
           observation_persistence: 0.1              #观测数据保留1秒，超时未刷新的障碍物自动清除
 
       always_send_full_costmap: True                 #是否每次更新时都发送完整的成本图，而不是更新
@@ -123,17 +124,18 @@ global_costmap:
       obstacle_layer:  #障碍层参数
         plugin: "nav2_costmap_2d::ObstacleLayer" #障碍层插件
         enabled: True
-        observation_sources: scan                  #观测源
-        scan:
-          topic: /scan_fe
-          max_obstacle_height: 2.0                 #可检测障碍物的最高高度（米）
-          clearing: True                           #是否启用障碍物清除功能
-          marking: True                            #是否启用障碍物标记功能
-          data_type: "LaserScan"                   #数据类型
-          raytrace_max_range: 6.0                 #控制光线追踪从代价地图中清除障碍物的最大范围
-          raytrace_min_range: 0.0                  #控制光线追踪从代价地图中清除障碍物的最大范围
-          obstacle_max_range: 5.0                  #控制代价地图上标记障碍物的最大范围，从2.5降到1.5减少全局代价地图波动
-          obstacle_min_range: 0.0                  #控制代价地图上标记障碍物的最小范围
+        observation_sources: pointcloud              #观测源
+        pointcloud:
+          topic: /cloud_registered_base                   #base_link系点云（经cloud_to_base_link转换）
+          data_type: "PointCloud2"                   #数据类型，3D点云
+          min_obstacle_height: -0.12                 #base_link系下最小障碍高度，排除地面
+          max_obstacle_height: 1.5                   #base_link系下最大障碍高度
+          clearing: True                             #是否启用障碍物清除功能
+          marking: True                              #是否启用障碍物标记功能
+          raytrace_max_range: 6.0                    #控制光线追踪从代价地图中清除障碍物的最大范围
+          raytrace_min_range: 0.6                    #footprint内部的点不参与清除
+          obstacle_max_range: 5.0                    #控制代价地图上标记障碍物的最大范围，从2.5降到1.5减少全局代价地图波动
+          obstacle_min_range: 0.6                    #排除footprint内的自遮挡点云
       static_layer: #静态层参数
         plugin: "nav2_costmap_2d::StaticLayer"     #静态层插件
         map_subscribe_transient_local: True
@@ -175,11 +177,11 @@ planner_server: #规划器服务器参数
       allow_unknown: false                # 允许在未知空间搜索
       max_iterations: 1000000             # 失败前搜索的最大迭代次数（以防无法到达），设置为 -1 以禁用
       max_on_approach_iterations: 1000    # 在公差范围内尝试达到目标的最大迭代次数，仅限 2D
-      max_planning_time: 5.0              # 规划器进行规划、平滑和上采样的最大时间（以秒为单位）。
+      max_planning_time: 2.0              # 规划器进行规划、平滑和上采样的最大时间（以秒为单位）。从5.0降到2.0，目标不可达时快速放弃交给行为服务器
       motion_model_for_search: "REEDS_SHEPP"    # 2D Moore, Von Neumann; Hybrid Dubin, Redds-Shepp; State Lattice set internally
       cost_travel_multiplier: 3.5         #应用于搜索以避开高成本区域的成本乘数。
       # For 2D: Cost multiplier to apply to search to steer away from high cost areas. Larger values will place in the center of aisles more exactly (if non-`FREE` cost potential field exists) but take slightly longer to compute. To optimize for speed, a value of 1.0 is reasonable. A reasonable tradeoff value is 2.0. A value of 0.0 effective disables steering away from obstacles and acts like a naive binary search A*.
-      angle_quantization_bins: 64         #用于 SE2 搜索的角度箱数量。这可以是任何偶数，但好的基线是 64 或 72（以 5 度为增量）32
+      angle_quantization_bins: 32         #用于 SE2 搜索的角度箱数量。这可以是任何偶数，但好的基线是 64 或 72（以 5 度为增量）32
       # For Hybrid/Lattice nodes: Number of angle bins for search, must be 1 for 2D node (no angle search)
       analytic_expansion_ratio: 3.5       #规划器将尝试以与该值和最小启发式方法成比例的频率完成分析扩展。
       # For Hybrid/Lattice nodes: The ratio to attempt analytic expansions during search for final approach.

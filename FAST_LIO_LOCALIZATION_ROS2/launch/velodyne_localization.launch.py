@@ -107,17 +107,27 @@ def generate_launch_description():
         arguments=['0.40', '0.0', '0.22', '0', '0', '0', 'base_link', 'livox_frame'],
     )
 
+    # P0-2 修复: /cloud_registered 的 frame_id 写作 "odom" 但实际是 LIO 自己的世界系 W_L，
+    # 与 TF 里 EKF 的 odom 同名异系 → 障碍位置随两个里程计分歧漂移。
+    # cloud_to_base_link 不查 TF，直接用 /Odometry 把点云转到 base_link 后重发，偏差恒为 0。
+    cloud_to_base_link_node = Node(
+        package='fast_lio_localization',
+        executable='cloud_to_base_link.py',
+        name='cloud_to_base_link',
+        output='screen'
+    )
+
     # 3D 点云转 2D scan, 供 Nav2 costmap 观测源使用 (代替原 2D 雷达的 /scan_fe)
-    # 输入 /cloud_registered (frame: odom), 转换到 base_link 后按高度切片
-    # min/max_height 是 base_link 系下的高度: 地面约 -0.22, 切 [-0.12, 1.2] 排除地面
+    # 输入 /cloud_registered_base (frame: base_link, 已由 cloud_to_base_link 用 LIO 位姿转好)
+    # target_frame 置空 → 不再做 TF 查询，避免 odom 同名异系；min/max_height 是 base_link 系下的高度
     pointcloud_to_scan_node = Node(
         package='pointcloud_to_laserscan',
         executable='pointcloud_to_laserscan_node',
         name='pointcloud_to_laserscan',
-        remappings=[('cloud_in', '/cloud_registered'),
+        remappings=[('cloud_in', '/cloud_registered_base'),
                     ('scan', '/scan_fe')],
         parameters=[{
-            'target_frame': 'base_link',
+            'target_frame': '',
             'transform_tolerance': 0.05,
             'min_height': -0.12,
             'max_height': 1.2,
@@ -154,6 +164,7 @@ def generate_launch_description():
     ld.add_action(global_map_publisher_node)
     ld.add_action(ekf_node)
     ld.add_action(livox_static_tf_node)
+    ld.add_action(cloud_to_base_link_node)
     ld.add_action(pointcloud_to_scan_node)
     ld.add_action(rviz_node)
 

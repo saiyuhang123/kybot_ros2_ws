@@ -131,6 +131,7 @@ install(PROGRAMS
   scripts/global_localization.py
   scripts/publish_initial_pose.py
   scripts/global_map_publisher.py
+  scripts/cloud_to_base_link.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
