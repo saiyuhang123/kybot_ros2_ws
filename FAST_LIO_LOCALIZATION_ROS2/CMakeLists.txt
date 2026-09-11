@@ -132,6 +132,7 @@ install(PROGRAMS
   scripts/publish_initial_pose.py
   scripts/global_map_publisher.py
   scripts/cloud_to_base_link.py
+  scripts/cloud_crop_box.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

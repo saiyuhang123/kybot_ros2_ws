@@ -143,6 +143,15 @@ def generate_launch_description():
         output='screen'
     )
 
+    # 车尾升降台自遮挡剔除: 负盒裁剪 base_link 系点云, 输出 /cloud_registered_base_filtered
+    # Nav2 costmap 的观测源应改用过滤后的话题
+    cloud_crop_box_node = Node(
+        package='fast_lio_localization',
+        executable='cloud_crop_box.py',
+        name='cloud_crop_box',
+        output='screen'
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -165,6 +174,7 @@ def generate_launch_description():
     ld.add_action(ekf_node)
     ld.add_action(livox_static_tf_node)
     ld.add_action(cloud_to_base_link_node)
+    ld.add_action(cloud_crop_box_node)
     ld.add_action(pointcloud_to_scan_node)
     ld.add_action(rviz_node)
 

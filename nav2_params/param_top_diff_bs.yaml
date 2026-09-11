@@ -1,3 +1,10 @@
+amcl:
+  ros__parameters:
+    use_sim_time: False
+    # 定位由 FAST_LIO（transform_fusion 广播 map->odom）提供，
+    # AMCL 只保留来兼容 nav2_bringup 的 launch 结构，禁止它发 TF 避免双源冲突
+    tf_broadcast: false
+
 bt_navigator_rclcpp_node:
   ros__parameters:
     use_sim_time: False
@@ -87,7 +94,7 @@ local_costmap:
         mark_threshold: 0                          #标记体素的阈值
         observation_sources: pointcloud            #观测源
         pointcloud:
-          topic: /cloud_registered_base          #已用LIO自身位姿转到base_link的点云，消除odom同名异系导致的障碍漂移(P0-2)
+          topic: /cloud_registered_base_filtered   #过滤车尾升降台自遮挡后的点云，消除odom同名异系导致的障碍漂移(P0-2)
           data_type: "PointCloud2"                 #数据类型，3D点云
           min_obstacle_height: -0.12               #base_link系下最小障碍高度，地面约-0.22，排除地面（与原2D切片一致）
           max_obstacle_height: 1.5                 #base_link系下最大障碍高度，过滤头顶/高处干扰
@@ -126,7 +133,7 @@ global_costmap:
         enabled: True
         observation_sources: pointcloud              #观测源
         pointcloud:
-          topic: /cloud_registered_base                   #base_link系点云（经cloud_to_base_link转换）
+          topic: /cloud_registered_base_filtered           #base_link系点云（已剔除车尾升降台自遮挡）
           data_type: "PointCloud2"                   #数据类型，3D点云
           min_obstacle_height: -0.12                 #base_link系下最小障碍高度，排除地面
           max_obstacle_height: 1.5                   #base_link系下最大障碍高度
